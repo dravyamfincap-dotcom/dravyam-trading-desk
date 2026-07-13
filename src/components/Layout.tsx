@@ -22,6 +22,8 @@ const nav = [
   { to: "/settings", label: "Settings", icon: GearSix },
 ];
 
+const logoUrl = `${import.meta.env.BASE_URL}dravyam-logo.png`;
+
 export function Layout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const lastUpdated = usePortfolioStore((state) => state.lastUpdated);
@@ -31,7 +33,7 @@ export function Layout() {
     <div className="app-shell">
       <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`}>
         <div className="brand">
-          <img className="brand-lockup" src="/dravyam-logo.png" alt="Dravyam Fincap — Generating Alpha" />
+          <img className="brand-lockup" src={logoUrl} alt="Dravyam Fincap — Generating Alpha" />
           <button className="mobile-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">
             <X size={20} />
           </button>
