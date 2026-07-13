@@ -34,9 +34,9 @@ npm run check
 
 ## Live quote flow
 
-- The browser calls `/api/quotes?symbols=AVALON,CPPLUS,SUPRIYA,TRITURBINE`.
+- The browser calls `/api/quotes?symbols=AVALON,CPPLUS,SUPRIYA,TRITURBINE` using the current portfolio symbols.
 - Vercel reads `TWELVE_DATA_API_KEY` server-side.
-- The API fetches supported NSE quotes from Twelve Data.
+- The API accepts clean NSE symbols and fetches `SYMBOL:NSE` quotes from Twelve Data.
 - The dashboard applies `currentPrice` and `previousClose` without exposing the API key.
 
 Prices remain manually editable whenever the provider is unavailable. Market analysis is informational and not investment advice.

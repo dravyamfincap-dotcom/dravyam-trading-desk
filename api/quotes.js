@@ -1,18 +1,12 @@
-const PROVIDER_SYMBOLS = {
-  AVALON: "AVALON:NSE",
-  CPPLUS: "CPPLUS:NSE",
-  SUPRIYA: "SUPRIYA:NSE",
-  TRITURBINE: "TRITURBINE:NSE",
-};
-
 const CACHE_SECONDS = 300;
+const NSE_SYMBOL_PATTERN = /^[A-Z0-9&-]{1,24}$/;
 
 function parseSymbols(value) {
-  return String(value ?? "")
+  return [...new Set(String(value ?? "")
     .split(",")
     .map((symbol) => symbol.trim().toUpperCase())
     .filter(Boolean)
-    .filter((symbol) => Object.hasOwn(PROVIDER_SYMBOLS, symbol));
+    .filter((symbol) => NSE_SYMBOL_PATTERN.test(symbol)))];
 }
 
 function toNumber(value) {
@@ -21,7 +15,7 @@ function toNumber(value) {
 }
 
 async function fetchQuote(symbol, apiKey) {
-  const providerSymbol = PROVIDER_SYMBOLS[symbol];
+  const providerSymbol = `${symbol}:NSE`;
   const params = new URLSearchParams({
     symbol: providerSymbol,
     apikey: apiKey,
