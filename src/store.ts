@@ -5,6 +5,7 @@ import type { JournalEntry, PortfolioState, Position } from "./types";
 
 interface PortfolioStore extends PortfolioState {
   updatePrice: (id: string, price: number) => void;
+  applyQuotes: (quotes: Array<{ symbol: string; price: number; previousClose: number }>) => void;
   replacePositions: (positions: Position[]) => void;
   addJournal: (entry: JournalEntry) => void;
   deleteJournal: (id: string) => void;
@@ -68,6 +69,23 @@ export const usePortfolioStore = create<PortfolioStore>()(
           ),
           lastUpdated: new Date().toISOString(),
           dataMode: "manual",
+        })),
+      applyQuotes: (quotes) =>
+        set((state) => ({
+          positions: state.positions.map((position) => {
+            const quote = quotes.find((item) => item.symbol === position.symbol);
+
+            return quote
+              ? {
+                  ...position,
+                  currentPrice: quote.price,
+                  previousClose: quote.previousClose,
+                  manualPrice: false,
+                }
+              : position;
+          }),
+          lastUpdated: new Date().toISOString(),
+          dataMode: "delayed",
         })),
       replacePositions: (positions) =>
         set({ positions, lastUpdated: new Date().toISOString(), dataMode: "manual" }),

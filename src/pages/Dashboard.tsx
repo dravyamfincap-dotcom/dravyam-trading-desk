@@ -1,13 +1,15 @@
 import { DownloadSimple, Info, SlidersHorizontal, TrendDown, TrendUp, X } from "@phosphor-icons/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AllocationChart, ContributionChart, PerformanceChart, Sparkline } from "../components/Charts";
 import { MetricCard, PageHeader } from "../components/Common";
+import { fetchLiveQuotes } from "../lib/liveQuotes";
 import { buildInsights, calculatePositions, compactINR, INR, INR_PRECISE, makePerformanceSeries, portfolioTotals } from "../lib/portfolio";
 import { usePortfolioStore } from "../store";
 
 export function Dashboard() {
   const positions = usePortfolioStore((state) => state.positions);
   const updatePrice = usePortfolioStore((state) => state.updatePrice);
+  const applyQuotes = usePortfolioStore((state) => state.applyQuotes);
   const metrics = useMemo(() => calculatePositions(positions), [positions]);
   const totals = portfolioTotals(metrics);
   const performance = makePerformanceSeries(totals.invested, totals.currentValue);
@@ -15,7 +17,55 @@ export function Dashboard() {
   const [query, setQuery] = useState("");
   const filtered = metrics.filter((p) => p.symbol.toLowerCase().includes(query.toLowerCase()) || p.name.toLowerCase().includes(query.toLowerCase()));
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [quoteStatus, setQuoteStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [quoteError, setQuoteError] = useState("");
   const selected = metrics.find((p) => p.id === selectedId);
+  const symbolsKey = useMemo(() => positions.map((position) => position.symbol).join(","), [positions]);
+  const symbols = useMemo(() => symbolsKey.split(",").filter(Boolean), [symbolsKey]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function refreshQuotes() {
+      if (!symbols.length) return;
+
+      setQuoteStatus("loading");
+      setQuoteError("");
+
+      try {
+        const quotes = await fetchLiveQuotes(symbols);
+        if (!active) return;
+        applyQuotes(quotes);
+        setQuoteStatus("ready");
+      } catch (error) {
+        if (!active) return;
+        setQuoteStatus("error");
+        setQuoteError(error instanceof Error ? error.message : "Quote refresh failed");
+      }
+    }
+
+    refreshQuotes();
+    const interval = window.setInterval(refreshQuotes, 5 * 60 * 1000);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [applyQuotes, symbolsKey]);
+
+  async function refreshNow() {
+    setQuoteStatus("loading");
+    setQuoteError("");
+
+    try {
+      const quotes = await fetchLiveQuotes(symbols);
+      applyQuotes(quotes);
+      setQuoteStatus("ready");
+    } catch (error) {
+      setQuoteStatus("error");
+      setQuoteError(error instanceof Error ? error.message : "Quote refresh failed");
+    }
+  }
 
   return (
     <>
@@ -23,8 +73,9 @@ export function Dashboard() {
         eyebrow="Portfolio command"
         title="Capital, clearly accounted for."
         copy="A private ledger of exposure, contribution and risk across your active NSE positions."
-        actions={<button className="primary-button" onClick={() => window.print()}><DownloadSimple size={18} /> Export brief</button>}
+        actions={<><button className="secondary-button" onClick={refreshNow} disabled={quoteStatus === "loading"}><SlidersHorizontal size={18} /> {quoteStatus === "loading" ? "Refreshing" : "Refresh rates"}</button><button className="primary-button" onClick={() => window.print()}><DownloadSimple size={18} /> Export brief</button></>}
       />
+      {quoteStatus === "error" && <div className="error-banner">Live quote refresh unavailable: {quoteError}. Manual dashboard prices remain active.</div>}
       <section className="metric-grid">
         <MetricCard label="Invested capital" value={compactINR(totals.invested)} delta="Four active positions" />
         <MetricCard label="Current value" value={compactINR(totals.currentValue)} delta={`${totals.pnlPct >= 0 ? "+" : ""}${totals.pnlPct.toFixed(2)}% since entry`} tone={totals.pnl >= 0 ? "positive" : "negative"} />
