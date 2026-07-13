@@ -25,18 +25,18 @@ npm run check
 
 1. Import the GitHub repository into Vercel.
 2. Keep Framework Preset as `Vite`.
-3. Add the environment variable in Vercel Project Settings:
+3. Deploy. Vercel builds `dist/` and serves `/api/quotes` as a serverless function.
+4. The dashboard refreshes quotes on load, every 5 minutes, and when the user clicks `Refresh rates`.
 
-   `TWELVE_DATA_API_KEY=<your Twelve Data key>`
+Optional fallback provider:
 
-4. Deploy. Vercel builds `dist/` and serves `/api/quotes` as a serverless function.
-5. The dashboard refreshes quotes on load, every 5 minutes, and when the user clicks `Refresh rates`.
+`TWELVE_DATA_API_KEY=<your Twelve Data key>`
 
 ## Live quote flow
 
 - The browser calls `/api/quotes?symbols=AVALON,CPPLUS,SUPRIYA,TRITURBINE` using the current portfolio symbols.
-- Vercel reads `TWELVE_DATA_API_KEY` server-side.
-- The API accepts clean NSE symbols and fetches `SYMBOL:NSE` quotes from Twelve Data.
-- The dashboard applies `currentPrice` and `previousClose` without exposing the API key.
+- Vercel fetches `SYMBOL.NS` quotes from Yahoo Finance by default.
+- If Yahoo Finance fails and `TWELVE_DATA_API_KEY` is configured, the API falls back to Twelve Data `SYMBOL:NSE`.
+- The dashboard applies `currentPrice` and `previousClose` without exposing provider details to the browser.
 
-Prices remain manually editable whenever the provider is unavailable. Market analysis is informational and not investment advice.
+Prices remain manually editable whenever providers are unavailable. Yahoo Finance is an unofficial no-key source for personal dashboards; market analysis is informational and not investment advice.
