@@ -18,6 +18,43 @@ const initialState: PortfolioState = {
   dataMode: "manual",
 };
 
+const refreshSeededRates = (positions: Position[]) =>
+  positions.map((position) => {
+    const seed = seedPositions.find(
+      (seedPosition) =>
+        seedPosition.id === position.id || seedPosition.symbol === position.symbol,
+    );
+
+    return seed
+      ? {
+          ...position,
+          name: seed.name,
+          sector: seed.sector,
+          currentPrice: seed.currentPrice,
+          previousClose: seed.previousClose,
+          manualPrice: true,
+        }
+      : position;
+  });
+
+const mergeSeedJournal = (journal: JournalEntry[]) => [
+  ...seedJournal.filter((seedEntry) => !journal.some((entry) => entry.id === seedEntry.id)),
+  ...journal,
+];
+
+const migratePersistedState = (persistedState: unknown): PortfolioState => {
+  const state = persistedState as Partial<PortfolioState>;
+
+  return {
+    ...initialState,
+    ...state,
+    positions: refreshSeededRates(state.positions ?? seedPositions),
+    journal: mergeSeedJournal(state.journal ?? seedJournal),
+    lastUpdated: new Date().toISOString(),
+    dataMode: "manual",
+  };
+};
+
 export const usePortfolioStore = create<PortfolioStore>()(
   persist(
     (set) => ({
@@ -39,6 +76,10 @@ export const usePortfolioStore = create<PortfolioStore>()(
         set((state) => ({ journal: state.journal.filter((entry) => entry.id !== id) })),
       reset: () => set(initialState),
     }),
-    { name: "dravyam-portfolio-v1" },
+    {
+      name: "dravyam-portfolio-v1",
+      version: 2,
+      migrate: migratePersistedState,
+    },
   ),
 );

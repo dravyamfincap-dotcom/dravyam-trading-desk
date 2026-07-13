@@ -11,7 +11,9 @@ describe("portfolio calculations", () => {
 
   it("calculates position pnl and allocation", () => {
     const metrics = calculatePositions(seedPositions, new Date("2026-06-14"));
-    expect(metrics[0].pnl).toBeCloseTo((1548.4 - 1465) * 660);
+    expect(metrics[0].pnl).toBeCloseTo(
+      (seedPositions[0].currentPrice - seedPositions[0].entryPrice) * seedPositions[0].quantity,
+    );
     expect(metrics.reduce((sum, p) => sum + p.allocation, 0)).toBeCloseTo(100);
   });
 
