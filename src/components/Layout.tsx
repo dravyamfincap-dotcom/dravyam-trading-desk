@@ -1,7 +1,6 @@
 import {
   ArrowsClockwise,
   BookOpenText,
-  ChartDonut,
   ChartLineUp,
   GearSix,
   List,
@@ -32,11 +31,7 @@ export function Layout() {
     <div className="app-shell">
       <aside className={`sidebar ${menuOpen ? "sidebar-open" : ""}`}>
         <div className="brand">
-          <img src="/dravyam-mark.png" alt="Dravyam" />
-          <div>
-            <strong>Dravyam</strong>
-            <span>Trading Desk</span>
-          </div>
+          <img className="brand-lockup" src="/dravyam-logo.png" alt="Dravyam Fincap — Generating Alpha" />
           <button className="mobile-close" onClick={() => setMenuOpen(false)} aria-label="Close menu">
             <X size={20} />
           </button>
